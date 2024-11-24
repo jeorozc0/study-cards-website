@@ -38,7 +38,6 @@
         }
         .card-container.flipped { transform: rotateY(180deg); }
         
-        /* Prevent text selection */
         .no-select {
             -webkit-touch-callout: none;
             -webkit-user-select: none;
@@ -48,7 +47,6 @@
             user-select: none;
         }
 
-        /* Custom scrollbar for card content */
         .card-content {
             scrollbar-width: thin;
             scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
@@ -64,7 +62,6 @@
             border-radius: 2px;
         }
 
-        /* Safe area for notched phones */
         @supports(padding: max(0px)) {
             body {
                 padding-left: max(1rem, env(safe-area-inset-left));
@@ -73,10 +70,28 @@
             }
         }
 
-        /* Prevent font size inflation on mobile */
         html {
             -webkit-text-size-adjust: none;
             text-size-adjust: none;
+        }
+
+        /* Custom button hover effect */
+        .nav-button {
+            transition: all 0.3s ease;
+        }
+        .nav-button:not(:disabled):hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        /* Progress bar animation */
+        @keyframes progressFill {
+            from { transform: scaleX(0); }
+            to { transform: scaleX(1); }
+        }
+        .progress-animate {
+            transform-origin: left;
+            animation: progressFill 0.3s ease-out forwards;
         }
     </style>
 </head>
@@ -102,14 +117,14 @@
     <div id="cardsContainer" class="hidden w-full max-w-4xl animate-card-in px-0 sm:px-4">
         <!-- Progress Bar -->
         <div class="fixed top-0 left-0 w-full h-1 bg-gray-900">
-            <div id="progressBar" class="h-full bg-white transition-all duration-300 ease-out"></div>
+            <div id="progressBar" class="h-full bg-white transition-all duration-300 ease-out progress-animate"></div>
         </div>
 
-        <!-- Replace CSV Button & Counter Container -->
+        <!-- Top Controls -->
         <div class="w-full flex justify-between items-center mb-4 px-2 sm:px-0">
             <button id="replaceButton" 
                     onclick="document.getElementById('replaceCsvInput').click()"
-                    class="bg-gray-800 text-white px-3 py-1.5 rounded-lg text-xs sm:text-sm hover:bg-gray-700 transition-colors duration-300 border border-gray-700">
+                    class="nav-button bg-gray-800 text-white px-3 py-1.5 rounded-lg text-xs sm:text-sm hover:bg-gray-700 transition-all duration-300 border border-gray-700">
                 Replace CSV
             </button>
             <div id="counter" class="text-xs sm:text-sm text-gray-600"></div>
@@ -135,20 +150,72 @@
             </div>
         </div>
 
-        <!-- Navigation -->
-        <div class="flex justify-center gap-3 sm:gap-4">
+        <!-- Primary Navigation -->
+        <div class="flex justify-center gap-3 sm:gap-4 mb-6">
             <button id="prevButton" disabled
-                    class="px-4 sm:px-6 py-2 rounded-lg bg-gray-900 text-white border border-gray-700 
-                           text-sm sm:text-base transition-all duration-300 hover:bg-gray-800 hover:-translate-y-0.5
+                    class="nav-button px-4 sm:px-6 py-2 rounded-lg bg-gray-900 text-white border border-gray-700 
+                           text-sm sm:text-base transition-all duration-300
                            disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none">
                 Previous
             </button>
             <button id="nextButton" disabled
-                    class="px-4 sm:px-6 py-2 rounded-lg bg-gray-900 text-white border border-gray-700 
-                           text-sm sm:text-base transition-all duration-300 hover:bg-gray-800 hover:-translate-y-0.5
+                    class="nav-button px-4 sm:px-6 py-2 rounded-lg bg-gray-900 text-white border border-gray-700 
+                           text-sm sm:text-base transition-all duration-300
                            disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none">
                 Next
             </button>
+        </div>
+
+        <!-- Extended Navigation -->
+        <div class="w-full max-w-4xl px-2 sm:px-0">
+            <!-- Primary Controls -->
+            <div class="flex flex-wrap justify-center gap-3 mb-4">
+                <button id="homeButton"
+                        class="nav-button bg-gray-900 text-white px-4 py-2 rounded-lg border border-gray-700 
+                               text-sm sm:text-base flex items-center gap-2 transition-all duration-300">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                    </svg>
+                    <span>First Card</span>
+                </button>
+                
+                <button id="shuffleButton"
+                        class="nav-button bg-gray-900 text-white px-4 py-2 rounded-lg border border-gray-700 
+                               text-sm sm:text-base flex items-center gap-2 transition-all duration-300">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    <span>Shuffle</span>
+                </button>
+            </div>
+
+            <!-- Quick Jump -->
+            <div class="flex justify-center items-center gap-3 flex-wrap">
+                <button id="jump10Back" 
+                        class="nav-button bg-gray-900 text-white px-3 py-1.5 rounded-lg border border-gray-700 
+                               text-xs sm:text-sm transition-all duration-300">
+                    -10 Cards
+                </button>
+                
+                <div class="flex items-center gap-2">
+                    <input type="number" 
+                           id="cardNumberInput"
+                           min="1"
+                           class="w-16 px-2 py-1 rounded bg-gray-800 border border-gray-700 text-white text-center text-sm"
+                           placeholder="Card #">
+                    <button id="jumpToCard"
+                            class="nav-button bg-gray-900 text-white px-3 py-1.5 rounded-lg border border-gray-700 
+                                   text-xs sm:text-sm transition-all duration-300">
+                        Go
+                    </button>
+                </div>
+
+                <button id="jump10Forward"
+                        class="nav-button bg-gray-900 text-white px-3 py-1.5 rounded-lg border border-gray-700 
+                               text-xs sm:text-sm transition-all duration-300">
+                    +10 Cards
+                </button>
+            </div>
         </div>
 
         <!-- Keyboard Shortcuts -->
@@ -164,168 +231,257 @@
     </div>
 
     <script>
-        let cards = [];
-        let currentCardIndex = 0;
-        let isFlipped = false;
-        let touchStartX = 0;
-        let touchEndX = 0;
+    // State variables
+let cards = [];
+let currentCardIndex = 0;
+let isFlipped = false;
+let touchStartX = 0;
+let touchEndX = 0;
 
-        // DOM Elements
-        const uploadContainer = document.getElementById('uploadContainer');
-        const cardsContainer = document.getElementById('cardsContainer');
-        const fileInput = document.getElementById('fileInput');
-        const replaceCsvInput = document.getElementById('replaceCsvInput');
-        const flashcardContainer = document.getElementById('flashcardContainer');
-        const questionContent = document.getElementById('questionContent');
-        const answerContent = document.getElementById('answerContent');
-        const prevButton = document.getElementById('prevButton');
-        const nextButton = document.getElementById('nextButton');
-        const progressBar = document.getElementById('progressBar');
-        const counter = document.getElementById('counter');
+// DOM Elements
+const uploadContainer = document.getElementById('uploadContainer');
+const cardsContainer = document.getElementById('cardsContainer');
+const fileInput = document.getElementById('fileInput');
+const replaceCsvInput = document.getElementById('replaceCsvInput');
+const flashcardContainer = document.getElementById('flashcardContainer');
+const questionContent = document.getElementById('questionContent');
+const answerContent = document.getElementById('answerContent');
+const prevButton = document.getElementById('prevButton');
+const nextButton = document.getElementById('nextButton');
+const progressBar = document.getElementById('progressBar');
+const counter = document.getElementById('counter');
+const homeButton = document.getElementById('homeButton');
+const shuffleButton = document.getElementById('shuffleButton');
+const jump10Back = document.getElementById('jump10Back');
+const jump10Forward = document.getElementById('jump10Forward');
+const cardNumberInput = document.getElementById('cardNumberInput');
+const jumpToCard = document.getElementById('jumpToCard');
 
-        // Process CSV file function
-        function processFile(file, isReplacing = false) {
-            Papa.parse(file, {
-                header: true,
-                complete: (results) => {
-                    cards = results.data.filter(card => card.question && card.answer);
-                    if (cards.length > 0) {
-                        if (!isReplacing) {
-                            uploadContainer.classList.add('hidden');
-                            cardsContainer.classList.remove('hidden');
-                        }
-                        currentCardIndex = 0;
-                        isFlipped = false;
-                        flashcardContainer.classList.remove('flipped');
-                        updateCard();
-                        updateNavButtons();
-                        updateProgress();
-                    }
+// Process CSV file function
+function processFile(file, isReplacing = false) {
+    Papa.parse(file, {
+        header: true,
+        complete: (results) => {
+            cards = results.data.filter(card => card.question && card.answer);
+            if (cards.length > 0) {
+                if (!isReplacing) {
+                    uploadContainer.classList.add('hidden');
+                    cardsContainer.classList.remove('hidden');
                 }
-            });
-        }
-
-        // Touch handlers
-        flashcardContainer.addEventListener('touchstart', e => {
-            touchStartX = e.changedTouches[0].screenX;
-        });
-
-        flashcardContainer.addEventListener('touchend', e => {
-            touchEndX = e.changedTouches[0].screenX;
-            handleSwipe();
-        });
-
-        function handleSwipe() {
-            const swipeThreshold = 50;
-            const swipeDistance = touchEndX - touchStartX;
-            
-            if (Math.abs(swipeDistance) > swipeThreshold) {
-                if (swipeDistance > 0 && currentCardIndex > 0) {
-                    previousCard();
-                } else if (swipeDistance < 0 && currentCardIndex < cards.length - 1) {
-                    nextCard();
-                }
-            }
-        }
-
-        // File input handlers
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) processFile(file);
-        });
-
-        replaceCsvInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) processFile(file, true);
-        });
-
-        // Drag and Drop handlers
-        uploadContainer.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadContainer.classList.add('border-blue-500', 'bg-blue-500/10');
-        });
-
-        uploadContainer.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            uploadContainer.classList.remove('border-blue-500', 'bg-blue-500/10');
-        });
-
-        uploadContainer.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadContainer.classList.remove('border-blue-500', 'bg-blue-500/10');
-            const file = e.dataTransfer.files[0];
-            if (file) processFile(file);
-        });
-
-        // Card navigation
-        function nextCard() {
-            if (currentCardIndex < cards.length - 1) {
-                currentCardIndex++;
+                currentCardIndex = 0;
                 isFlipped = false;
                 flashcardContainer.classList.remove('flipped');
                 updateCard();
                 updateNavButtons();
                 updateProgress();
+                updateCardNumberInputMax();
             }
         }
+    });
+}
 
-        function previousCard() {
-            if (currentCardIndex > 0) {
-                currentCardIndex--;
-                isFlipped = false;
-                flashcardContainer.classList.remove('flipped');
-                updateCard();
-                updateNavButtons();
-                updateProgress();
-            }
+// Touch handlers
+flashcardContainer.addEventListener('touchstart', e => {
+    touchStartX = e.changedTouches[0].screenX;
+});
+
+flashcardContainer.addEventListener('touchend', e => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+});
+
+function handleSwipe() {
+    const swipeThreshold = 50;
+    const swipeDistance = touchEndX - touchStartX;
+    
+    if (Math.abs(swipeDistance) > swipeThreshold) {
+        if (swipeDistance > 0 && currentCardIndex > 0) {
+            previousCard();
+        } else if (swipeDistance < 0 && currentCardIndex < cards.length - 1) {
+            nextCard();
         }
+    }
+}
 
-        function toggleCard() {
-            isFlipped = !isFlipped;
-            flashcardContainer.classList.toggle('flipped');
+// File input handlers
+fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) processFile(file);
+});
+
+replaceCsvInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) processFile(file, true);
+});
+
+// Drag and Drop handlers
+uploadContainer.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadContainer.classList.add('border-blue-500', 'bg-blue-500/10');
+});
+
+uploadContainer.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    uploadContainer.classList.remove('border-blue-500', 'bg-blue-500/10');
+});
+
+uploadContainer.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadContainer.classList.remove('border-blue-500', 'bg-blue-500/10');
+    const file = e.dataTransfer.files[0];
+    if (file) processFile(file);
+});
+
+// Card navigation functions
+function nextCard() {
+    if (currentCardIndex < cards.length - 1) {
+        currentCardIndex++;
+        isFlipped = false;
+        flashcardContainer.classList.remove('flipped');
+        updateCard();
+        updateNavButtons();
+        updateProgress();
+    }
+}
+
+function previousCard() {
+    if (currentCardIndex > 0) {
+        currentCardIndex--;
+        isFlipped = false;
+        flashcardContainer.classList.remove('flipped');
+        updateCard();
+        updateNavButtons();
+        updateProgress();
+    }
+}
+
+function toggleCard() {
+    isFlipped = !isFlipped;
+    flashcardContainer.classList.toggle('flipped');
+}
+
+// Update UI functions
+function updateCard() {
+    if (cards.length > 0) {
+        const card = cards[currentCardIndex];
+        questionContent.textContent = card.question;
+        answerContent.textContent = card.answer;
+    }
+}
+
+function updateNavButtons() {
+    prevButton.disabled = currentCardIndex === 0;
+    nextButton.disabled = currentCardIndex === cards.length - 1;
+}
+
+function updateProgress() {
+    const progress = ((currentCardIndex + 1) / cards.length) * 100;
+    progressBar.style.width = `${progress}%`;
+    counter.textContent = `${currentCardIndex + 1} / ${cards.length}`;
+}
+
+function updateCardNumberInputMax() {
+    cardNumberInput.setAttribute('max', cards.length);
+}
+
+// Shuffle functionality
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+// Event listeners
+flashcardContainer.addEventListener('click', toggleCard);
+prevButton.addEventListener('click', previousCard);
+nextButton.addEventListener('click', nextCard);
+
+// Home button - go to first card
+homeButton.addEventListener('click', () => {
+    currentCardIndex = 0;
+    isFlipped = false;
+    flashcardContainer.classList.remove('flipped');
+    updateCard();
+    updateNavButtons();
+    updateProgress();
+});
+
+// Shuffle button
+shuffleButton.addEventListener('click', () => {
+    cards = shuffleArray([...cards]);
+    currentCardIndex = 0;
+    isFlipped = false;
+    flashcardContainer.classList.remove('flipped');
+    updateCard();
+    updateNavButtons();
+    updateProgress();
+});
+
+// Jump 10 cards back
+jump10Back.addEventListener('click', () => {
+    const newIndex = Math.max(0, currentCardIndex - 10);
+    if (newIndex !== currentCardIndex) {
+        currentCardIndex = newIndex;
+        isFlipped = false;
+        flashcardContainer.classList.remove('flipped');
+        updateCard();
+        updateNavButtons();
+        updateProgress();
+    }
+});
+
+// Jump 10 cards forward
+jump10Forward.addEventListener('click', () => {
+    const newIndex = Math.min(cards.length - 1, currentCardIndex + 10);
+    if (newIndex !== currentCardIndex) {
+        currentCardIndex = newIndex;
+        isFlipped = false;
+        flashcardContainer.classList.remove('flipped');
+        updateCard();
+        updateNavButtons();
+        updateProgress();
+    }
+});
+
+// Jump to specific card
+jumpToCard.addEventListener('click', () => {
+    const cardNum = parseInt(cardNumberInput.value);
+    if (cardNum && cardNum >= 1 && cardNum <= cards.length) {
+        currentCardIndex = cardNum - 1;
+        isFlipped = false;
+        flashcardContainer.classList.remove('flipped');
+        updateCard();
+        updateNavButtons();
+        updateProgress();
+        cardNumberInput.value = '';
+    }
+});
+
+// Handle enter key in input
+cardNumberInput.addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') {
+        jumpToCard.click();
+    }
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+    if (cards.length > 0) {
+        switch (e.code) {
+            case 'Space':
+                toggleCard();
+                break;
+            case 'ArrowLeft':
+                previousCard();
+                break;
+            case 'ArrowRight':
+                nextCard();
+                break;
         }
-
-        // Update UI functions
-        function updateCard() {
-            if (cards.length > 0) {
-                const card = cards[currentCardIndex];
-                questionContent.textContent = card.question;
-                answerContent.textContent = card.answer;
-            }
-        }
-
-        function updateNavButtons() {
-            prevButton.disabled = currentCardIndex === 0;
-            nextButton.disabled = currentCardIndex === cards.length - 1;
-        }
-
-        function updateProgress() {
-            const progress = ((currentCardIndex + 1) / cards.length) * 100;
-            progressBar.style.width = `${progress}%`;
-            counter.textContent = `${currentCardIndex + 1} / ${cards.length}`;
-        }
-
-        // Event listeners
-        flashcardContainer.addEventListener('click', toggleCard);
-        prevButton.addEventListener('click', previousCard);
-        nextButton.addEventListener('click', nextCard);
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            if (cards.length > 0) {
-                switch (e.code) {
-                    case 'Space':
-                        toggleCard();
-                        break;
-                    case 'ArrowLeft':
-                        previousCard();
-                        break;
-                    case 'ArrowRight':
-                        nextCard();
-                        break;
-                }
-            }
-        });
-    </script>
+    }
+});
+            </script>
 </body>
 </html>
