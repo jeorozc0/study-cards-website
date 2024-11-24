@@ -1,310 +1,331 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Study Cards</title>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-        <script src="https://cdn.tailwindcss.com"></script>
-        <script>
-            tailwind.config = {
-                theme: {
-                    extend: {
-                        animation: {
-                            "card-flip": "flip 0.6s ease-in-out",
-                            "card-in": "cardIn 0.5s ease-out",
-                        },
-                        keyframes: {
-                            flip: {
-                                "0%, 100%": { transform: "rotateY(0deg)" },
-                                "100%": { transform: "rotateY(180deg)" },
-                            },
-                            cardIn: {
-                                "0%": { opacity: "0", transform: "translateY(20px)" },
-                                "100%": { opacity: "1", transform: "translateY(0)" },
-                            },
-                        },
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Cards</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'card-flip': 'flip 0.6s ease-in-out',
+                        'card-in': 'cardIn 0.5s ease-out',
                     },
-                },
-            };
-        </script>
-        <style>
-            .preserve-3d {
-                transform-style: preserve-3d;
-                perspective: 1000px;
-            }
-            .backface-hidden {
-                backface-visibility: hidden;
-            }
-            .rotate-y-180 {
-                transform: rotateY(180deg);
-            }
-            .card-container {
-                transition: transform 0.6s;
-                transform-style: preserve-3d;
-            }
-            .card-container.flipped {
-                transform: rotateY(180deg);
-            }
-        </style>
-    </head>
-    <body
-        class="min-h-screen bg-black text-white flex flex-col items-center justify-center p-4"
-    >
-        <!-- Upload Container -->
-        <div
-            id="uploadContainer"
-            class="border-2 border-dashed border-gray-700 p-12 text-center rounded-lg max-w-lg w-full transition-all duration-300 ease-in-out"
-        >
-            <svg
-                class="w-12 h-12 mx-auto mb-4 text-gray-600"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-            >
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="17 8 12 3 7 8" />
-                <line x1="12" y1="3" x2="12" y2="15" />
-            </svg>
-            <p class="text-gray-400 mb-4">Upload your flashcards CSV</p>
-            <p class="text-gray-500 text-sm mb-4">Drag and drop or click to upload</p>
-            <input type="file" id="fileInput" accept=".csv" class="hidden" />
-            <button
-                onclick="document.getElementById('fileInput').click()"
-                class="bg-white text-black px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300"
-            >
-                Choose File
-            </button>
-            <p class="text-gray-600 text-xs mt-4">
-                CSV must have 'question' and 'answer' columns
-            </p>
-        </div>
-
-        <!-- Cards Container -->
-        <div id="cardsContainer" class="hidden w-full max-w-4xl animate-card-in">
-            <!-- Progress Bar -->
-            <div class="fixed top-0 left-0 w-full h-0.5 bg-gray-900">
-                <div
-                    id="progressBar"
-                    class="h-full bg-white transition-all duration-300 ease-out"
-                ></div>
-            </div>
-
-            <!-- Replace CSV Button -->
-            <div class="fixed top-4 left-4">
-                <button
-                    id="replaceButton"
-                    onclick="document.getElementById('replaceCsvInput').click()"
-                    class="bg-gray-800 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-gray-700 transition-colors duration-300 border border-gray-700"
-                >
-                    Replace CSV
-                </button>
-                <input type="file" id="replaceCsvInput" accept=".csv" class="hidden" />
-            </div>
-
-            <!-- Counter -->
-            <div id="counter" class="fixed top-4 right-4 text-sm text-gray-600"></div>
-
-            <!-- Flashcard -->
-            <div
-                id="flashcardContainer"
-                class="card-container w-full aspect-[4/3] relative cursor-pointer mb-8"
-            >
-                <!-- Front -->
-                <div
-                    class="flashcard-front absolute w-full h-full backface-hidden rounded-xl p-8 bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 flex flex-col items-center justify-center"
-                >
-                    <span
-                        class="absolute top-4 left-4 text-xs text-gray-500 uppercase tracking-wider"
-                        >Question</span
-                    >
-                    <div
-                        id="questionContent"
-                        class="text-2xl text-center max-w-[80%] leading-relaxed"
-                    ></div>
-                </div>
-
-                <!-- Back -->
-                <div
-                    class="flashcard-back absolute w-full h-full backface-hidden rounded-xl p-8 bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 flex flex-col items-center justify-center rotate-y-180"
-                >
-                    <span
-                        class="absolute top-4 left-4 text-xs text-gray-500 uppercase tracking-wider"
-                        >Answer</span
-                    >
-                    <div
-                        id="answerContent"
-                        class="text-2xl text-center max-w-[80%] leading-relaxed"
-                    ></div>
-                </div>
-            </div>
-
-            <!-- Navigation -->
-            <div class="flex justify-center gap-4">
-                <button
-                    id="prevButton"
-                    disabled
-                    class="px-6 py-2 rounded-lg bg-gray-900 text-white border border-gray-700 transition-all duration-300 hover:bg-gray-800 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none"
-                >
-                    Previous
-                </button>
-                <button
-                    id="nextButton"
-                    disabled
-                    class="px-6 py-2 rounded-lg bg-gray-900 text-white border border-gray-700 transition-all duration-300 hover:bg-gray-800 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none"
-                >
-                    Next
-                </button>
-            </div>
-
-            <!-- Keyboard Shortcuts -->
-            <div class="fixed bottom-4 left-4 text-sm text-gray-600 hidden sm:block">
-                <p>Space: Flip card</p>
-                <p>←/→: Navigate cards</p>
-            </div>
-        </div>
-
-        <script>
-            let cards = [];
-            let currentCardIndex = 0;
-            let isFlipped = false;
-
-            // DOM Elements
-            const uploadContainer = document.getElementById("uploadContainer");
-            const cardsContainer = document.getElementById("cardsContainer");
-            const fileInput = document.getElementById("fileInput");
-            const replaceCsvInput = document.getElementById("replaceCsvInput");
-            const flashcardContainer = document.getElementById("flashcardContainer");
-            const questionContent = document.getElementById("questionContent");
-            const answerContent = document.getElementById("answerContent");
-            const prevButton = document.getElementById("prevButton");
-            const nextButton = document.getElementById("nextButton");
-            const progressBar = document.getElementById("progressBar");
-            const counter = document.getElementById("counter");
-
-            // Process CSV file function
-            function processFile(file, isReplacing = false) {
-                Papa.parse(file, {
-                    header: true,
-                    complete: (results) => {
-                        cards = results.data.filter(
-                            (card) => card.question && card.answer,
-                        );
-                        if (cards.length > 0) {
-                            if (!isReplacing) {
-                                uploadContainer.classList.add("hidden");
-                                cardsContainer.classList.remove("hidden");
-                            }
-                            currentCardIndex = 0;
-                            isFlipped = false;
-                            flashcardContainer.classList.remove("flipped");
-                            updateCard();
-                            updateNavButtons();
-                            updateProgress();
+                    keyframes: {
+                        flip: {
+                            '0%, 100%': { transform: 'rotateY(0deg)' },
+                            '100%': { transform: 'rotateY(180deg)' },
+                        },
+                        cardIn: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
                         }
-                    },
-                });
-            }
-
-            // File input handlers
-            fileInput.addEventListener("change", (e) => {
-                const file = e.target.files[0];
-                if (file) processFile(file);
-            });
-
-            replaceCsvInput.addEventListener("change", (e) => {
-                const file = e.target.files[0];
-                if (file) processFile(file, true);
-            });
-
-            // Drag and Drop handlers
-            uploadContainer.addEventListener("dragover", (e) => {
-                e.preventDefault();
-                uploadContainer.classList.add("border-blue-500", "bg-blue-500/10");
-            });
-
-            uploadContainer.addEventListener("dragleave", (e) => {
-                e.preventDefault();
-                uploadContainer.classList.remove("border-blue-500", "bg-blue-500/10");
-            });
-
-            uploadContainer.addEventListener("drop", (e) => {
-                e.preventDefault();
-                uploadContainer.classList.remove("border-blue-500", "bg-blue-500/10");
-                const file = e.dataTransfer.files[0];
-                if (file) processFile(file);
-            });
-
-            // Card navigation
-            function nextCard() {
-                if (currentCardIndex < cards.length - 1) {
-                    currentCardIndex++;
-                    isFlipped = false;
-                    flashcardContainer.classList.remove("flipped");
-                    updateCard();
-                    updateNavButtons();
-                    updateProgress();
+                    }
                 }
             }
+        }
+    </script>
+    <style>
+        .preserve-3d { transform-style: preserve-3d; perspective: 1000px; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .card-container {
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .card-container.flipped { transform: rotateY(180deg); }
+        
+        /* Prevent text selection */
+        .no-select {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
 
-            function previousCard() {
-                if (currentCardIndex > 0) {
-                    currentCardIndex--;
-                    isFlipped = false;
-                    flashcardContainer.classList.remove("flipped");
-                    updateCard();
-                    updateNavButtons();
-                    updateProgress();
-                }
+        /* Custom scrollbar for card content */
+        .card-content {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+        }
+        .card-content::-webkit-scrollbar {
+            width: 4px;
+        }
+        .card-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .card-content::-webkit-scrollbar-thumb {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+
+        /* Safe area for notched phones */
+        @supports(padding: max(0px)) {
+            body {
+                padding-left: max(1rem, env(safe-area-inset-left));
+                padding-right: max(1rem, env(safe-area-inset-right));
+                padding-bottom: max(1rem, env(safe-area-inset-bottom));
             }
+        }
 
-            function toggleCard() {
-                isFlipped = !isFlipped;
-                flashcardContainer.classList.toggle("flipped");
-            }
+        /* Prevent font size inflation on mobile */
+        html {
+            -webkit-text-size-adjust: none;
+            text-size-adjust: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-black text-white flex flex-col items-center justify-center p-4 md:p-6 no-select">
+    <!-- Upload Container -->
+    <div id="uploadContainer" class="border-2 border-dashed border-gray-700 p-6 sm:p-8 md:p-12 text-center rounded-lg w-full max-w-lg transition-all duration-300 ease-in-out mx-auto">
+        <svg class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 mx-auto mb-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <p class="text-gray-400 mb-2 text-sm sm:text-base">Upload your flashcards CSV</p>
+        <p class="text-gray-500 text-xs sm:text-sm mb-4">Drag and drop or click to upload</p>
+        <input type="file" id="fileInput" accept=".csv" class="hidden">
+        <button onclick="document.getElementById('fileInput').click()" 
+                class="bg-white text-black px-4 py-2 rounded-lg text-sm sm:text-base hover:bg-gray-100 transition-colors duration-300">
+            Choose File
+        </button>
+        <p class="text-gray-600 text-xs mt-4">CSV must have 'question' and 'answer' columns</p>
+    </div>
 
-            // Update UI functions
-            function updateCard() {
-                if (cards.length > 0) {
-                    const card = cards[currentCardIndex];
-                    questionContent.textContent = card.question;
-                    answerContent.textContent = card.answer;
-                }
-            }
+    <!-- Cards Container -->
+    <div id="cardsContainer" class="hidden w-full max-w-4xl animate-card-in px-0 sm:px-4">
+        <!-- Progress Bar -->
+        <div class="fixed top-0 left-0 w-full h-1 bg-gray-900">
+            <div id="progressBar" class="h-full bg-white transition-all duration-300 ease-out"></div>
+        </div>
 
-            function updateNavButtons() {
-                prevButton.disabled = currentCardIndex === 0;
-                nextButton.disabled = currentCardIndex === cards.length - 1;
-            }
+        <!-- Replace CSV Button & Counter Container -->
+        <div class="w-full flex justify-between items-center mb-4 px-2 sm:px-0">
+            <button id="replaceButton" 
+                    onclick="document.getElementById('replaceCsvInput').click()"
+                    class="bg-gray-800 text-white px-3 py-1.5 rounded-lg text-xs sm:text-sm hover:bg-gray-700 transition-colors duration-300 border border-gray-700">
+                Replace CSV
+            </button>
+            <div id="counter" class="text-xs sm:text-sm text-gray-600"></div>
+            <input type="file" id="replaceCsvInput" accept=".csv" class="hidden">
+        </div>
 
-            function updateProgress() {
-                const progress = ((currentCardIndex + 1) / cards.length) * 100;
-                progressBar.style.width = `${progress}%`;
-                counter.textContent = `${currentCardIndex + 1} / ${cards.length}`;
-            }
+        <!-- Flashcard -->
+        <div id="flashcardContainer" class="card-container w-full aspect-[3/2] sm:aspect-[3/2] lg:aspect-[2/1] relative cursor-pointer mb-6">
+            <!-- Front -->
+            <div class="flashcard-front absolute w-full h-full backface-hidden rounded-xl p-4 sm:p-6 md:p-8 
+                        bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700
+                        flex flex-col items-center justify-center">
+                <span class="absolute top-3 left-3 text-xs text-gray-500 uppercase tracking-wider">Question</span>
+                <div id="questionContent" class="text-base sm:text-xl md:text-2xl text-center max-w-[90%] leading-relaxed card-content overflow-y-auto"></div>
+            </div>
 
-            // Event listeners
-            flashcardContainer.addEventListener("click", toggleCard);
-            prevButton.addEventListener("click", previousCard);
-            nextButton.addEventListener("click", nextCard);
+            <!-- Back -->
+            <div class="flashcard-back absolute w-full h-full backface-hidden rounded-xl p-4 sm:p-6 md:p-8 
+                        bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700
+                        flex flex-col items-center justify-center rotate-y-180">
+                <span class="absolute top-3 left-3 text-xs text-gray-500 uppercase tracking-wider">Answer</span>
+                <div id="answerContent" class="text-base sm:text-xl md:text-2xl text-center max-w-[90%] leading-relaxed card-content overflow-y-auto"></div>
+            </div>
+        </div>
 
-            // Keyboard shortcuts
-            document.addEventListener("keydown", (e) => {
-                if (cards.length > 0) {
-                    switch (e.code) {
-                        case "Space":
-                            toggleCard();
-                            break;
-                        case "ArrowLeft":
-                            previousCard();
-                            break;
-                        case "ArrowRight":
-                            nextCard();
-                            break;
+        <!-- Navigation -->
+        <div class="flex justify-center gap-3 sm:gap-4">
+            <button id="prevButton" disabled
+                    class="px-4 sm:px-6 py-2 rounded-lg bg-gray-900 text-white border border-gray-700 
+                           text-sm sm:text-base transition-all duration-300 hover:bg-gray-800 hover:-translate-y-0.5
+                           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none">
+                Previous
+            </button>
+            <button id="nextButton" disabled
+                    class="px-4 sm:px-6 py-2 rounded-lg bg-gray-900 text-white border border-gray-700 
+                           text-sm sm:text-base transition-all duration-300 hover:bg-gray-800 hover:-translate-y-0.5
+                           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none">
+                Next
+            </button>
+        </div>
+
+        <!-- Keyboard Shortcuts -->
+        <div class="fixed bottom-4 left-4 text-xs sm:text-sm text-gray-600 hidden md:block">
+            <p>Space: Flip card</p>
+            <p>←/→: Navigate cards</p>
+        </div>
+
+        <!-- Touch Instructions -->
+        <div class="text-center text-xs text-gray-600 mt-4 md:hidden">
+            Tap card to flip • Swipe to navigate
+        </div>
+    </div>
+
+    <script>
+        let cards = [];
+        let currentCardIndex = 0;
+        let isFlipped = false;
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        // DOM Elements
+        const uploadContainer = document.getElementById('uploadContainer');
+        const cardsContainer = document.getElementById('cardsContainer');
+        const fileInput = document.getElementById('fileInput');
+        const replaceCsvInput = document.getElementById('replaceCsvInput');
+        const flashcardContainer = document.getElementById('flashcardContainer');
+        const questionContent = document.getElementById('questionContent');
+        const answerContent = document.getElementById('answerContent');
+        const prevButton = document.getElementById('prevButton');
+        const nextButton = document.getElementById('nextButton');
+        const progressBar = document.getElementById('progressBar');
+        const counter = document.getElementById('counter');
+
+        // Process CSV file function
+        function processFile(file, isReplacing = false) {
+            Papa.parse(file, {
+                header: true,
+                complete: (results) => {
+                    cards = results.data.filter(card => card.question && card.answer);
+                    if (cards.length > 0) {
+                        if (!isReplacing) {
+                            uploadContainer.classList.add('hidden');
+                            cardsContainer.classList.remove('hidden');
+                        }
+                        currentCardIndex = 0;
+                        isFlipped = false;
+                        flashcardContainer.classList.remove('flipped');
+                        updateCard();
+                        updateNavButtons();
+                        updateProgress();
                     }
                 }
             });
-        </script>
-    </body>
+        }
+
+        // Touch handlers
+        flashcardContainer.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        flashcardContainer.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            const swipeDistance = touchEndX - touchStartX;
+            
+            if (Math.abs(swipeDistance) > swipeThreshold) {
+                if (swipeDistance > 0 && currentCardIndex > 0) {
+                    previousCard();
+                } else if (swipeDistance < 0 && currentCardIndex < cards.length - 1) {
+                    nextCard();
+                }
+            }
+        }
+
+        // File input handlers
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) processFile(file);
+        });
+
+        replaceCsvInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) processFile(file, true);
+        });
+
+        // Drag and Drop handlers
+        uploadContainer.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadContainer.classList.add('border-blue-500', 'bg-blue-500/10');
+        });
+
+        uploadContainer.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadContainer.classList.remove('border-blue-500', 'bg-blue-500/10');
+        });
+
+        uploadContainer.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadContainer.classList.remove('border-blue-500', 'bg-blue-500/10');
+            const file = e.dataTransfer.files[0];
+            if (file) processFile(file);
+        });
+
+        // Card navigation
+        function nextCard() {
+            if (currentCardIndex < cards.length - 1) {
+                currentCardIndex++;
+                isFlipped = false;
+                flashcardContainer.classList.remove('flipped');
+                updateCard();
+                updateNavButtons();
+                updateProgress();
+            }
+        }
+
+        function previousCard() {
+            if (currentCardIndex > 0) {
+                currentCardIndex--;
+                isFlipped = false;
+                flashcardContainer.classList.remove('flipped');
+                updateCard();
+                updateNavButtons();
+                updateProgress();
+            }
+        }
+
+        function toggleCard() {
+            isFlipped = !isFlipped;
+            flashcardContainer.classList.toggle('flipped');
+        }
+
+        // Update UI functions
+        function updateCard() {
+            if (cards.length > 0) {
+                const card = cards[currentCardIndex];
+                questionContent.textContent = card.question;
+                answerContent.textContent = card.answer;
+            }
+        }
+
+        function updateNavButtons() {
+            prevButton.disabled = currentCardIndex === 0;
+            nextButton.disabled = currentCardIndex === cards.length - 1;
+        }
+
+        function updateProgress() {
+            const progress = ((currentCardIndex + 1) / cards.length) * 100;
+            progressBar.style.width = `${progress}%`;
+            counter.textContent = `${currentCardIndex + 1} / ${cards.length}`;
+        }
+
+        // Event listeners
+        flashcardContainer.addEventListener('click', toggleCard);
+        prevButton.addEventListener('click', previousCard);
+        nextButton.addEventListener('click', nextCard);
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (cards.length > 0) {
+                switch (e.code) {
+                    case 'Space':
+                        toggleCard();
+                        break;
+                    case 'ArrowLeft':
+                        previousCard();
+                        break;
+                    case 'ArrowRight':
+                        nextCard();
+                        break;
+                }
+            }
+        });
+    </script>
+</body>
 </html>
